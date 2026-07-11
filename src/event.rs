@@ -25,12 +25,11 @@ impl EventHandler {
                     let timeout = tick_rate
                         .checked_sub(last_tick.elapsed())
                         .unwrap_or(tick_rate);
-                    if event::poll(timeout).unwrap() {
-                        if let event::Event::Key(key_event) = event::read().unwrap()
-                            && key_event.kind == event::KeyEventKind::Press
-                        {
-                            let _ = sender.send(Event::Key(key_event));
-                        }
+                    if event::poll(timeout).unwrap()
+                        && let event::Event::Key(key_event) = event::read().unwrap()
+                        && key_event.kind == event::KeyEventKind::Press
+                    {
+                        let _ = sender.send(Event::Key(key_event));
                     }
 
                     if last_tick.elapsed() >= tick_rate {
