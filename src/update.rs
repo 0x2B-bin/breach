@@ -1,6 +1,6 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
-use crate::game_manager::{self, GameManager, View};
+use crate::game_manager::{Difficulty, GameManager, MatrixDirection, View};
 
 pub fn update(game_manager: &mut GameManager, key_event: KeyEvent) {
     match game_manager.active_view {
@@ -11,14 +11,51 @@ pub fn update(game_manager: &mut GameManager, key_event: KeyEvent) {
             }
             KeyCode::Up | KeyCode::Char('k') if game_manager.difficulty_idx > 0 => {
                 game_manager.difficulty_idx -= 1
-            },
+            }
             KeyCode::Enter => {
                 game_manager.active_view = View::Game;
+                game_manager.difficulty = match game_manager.difficulty_idx {
+                    0 => Difficulty::Easy,
+                    1 => Difficulty::Normal,
+                    2 => Difficulty::Hard,
+                    _ => Difficulty::Easy,
+                };
+                game_manager.generate_matrix();
             }
             _ => {}
         },
         View::Game => match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => game_manager.should_quit = true,
+            KeyCode::Right | KeyCode::Char('l')
+                if let MatrixDirection::Row = game_manager.maxtrix_direction
+                    && game_manager.matrix_col_idx < game_manager.matrix_size - 1 =>
+            {
+                game_manager.matrix_col_idx += 1;
+            }
+            KeyCode::Left | KeyCode::Char('h')
+                if let MatrixDirection::Row = game_manager.maxtrix_direction
+                    && game_manager.matrix_col_idx > 0 =>
+            {
+                game_manager.matrix_col_idx -= 1;
+            }
+            KeyCode::Up | KeyCode::Char('k')
+                if let MatrixDirection::Column = game_manager.maxtrix_direction
+                    && game_manager.matrix_row_idx > 0 =>
+            {
+                game_manager.matrix_row_idx -= 1;
+            }
+            KeyCode::Down | KeyCode::Char('j')
+                if let MatrixDirection::Column = game_manager.maxtrix_direction
+                    && game_manager.matrix_row_idx < game_manager.matrix_size - 1 =>
+            {
+                game_manager.matrix_row_idx += 1;
+            }
+            KeyCode::Enter => {
+                game_manager.maxtrix_direction = match game_manager.maxtrix_direction {
+                    MatrixDirection::Row => MatrixDirection::Column,
+                    MatrixDirection::Column => MatrixDirection::Row,
+                };
+            }
             _ => {}
         },
     };
