@@ -9,20 +9,20 @@ use ratatui::{
 use crate::game_manager::{GameManager, MatrixDirection, View};
 
 pub fn render(frame: &mut Frame, game_manager: &GameManager) {
-    let main_layout = Layout::new(
-        Direction::Horizontal,
-        [Constraint::Percentage(30), Constraint::Percentage(70)],
-    );
-
-    let [left, right] = frame.area().layout(&main_layout);
+    let area = centered_rect(frame.area(), 40, 100);
+    let areas = Layout::new(
+        Direction::Vertical,
+        [Constraint::Length((game_manager.matrix_size as u16) + 2), Constraint::Fill(1)],
+    )
+    .split(area);
 
     let block = Block::new().borders(Borders::ALL);
 
     if let View::Menu = game_manager.active_view {
         render_menu(frame, game_manager);
     } else {
-        render_code_matrix(frame, left, game_manager);
-        frame.render_widget(block, right);
+        render_code_matrix(frame, areas[0], game_manager);
+        frame.render_widget(block, areas[1]);
     }
 }
 
@@ -85,14 +85,6 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
         rows.push(Line::from(spans));
     }
 
-    let layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length((game_manager.matrix_size as u16) + 2),
-            Constraint::Min(0),
-        ])
-        .split(area);
-
     let block = Block::default()
         .borders(Borders::ALL)
         .title(" Code Matrix ".white())
@@ -100,7 +92,7 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
 
     let paragraph = Paragraph::new(rows).block(block).centered().white();
 
-    frame.render_widget(paragraph, layout[0]);
+    frame.render_widget(paragraph, area);
 }
 
 fn centered_rect(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
