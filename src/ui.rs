@@ -44,8 +44,8 @@ fn render_menu(frame: &mut Frame, game_manager: &GameManager) {
 
     let paragraph = Paragraph::new(diffs).centered();
 
-    let area = centered_rect(frame.area(), 20);
-    let paragraph_area = centered_rect(area, 40);
+    let area = centered_rect(frame.area(), 20, 20);
+    let paragraph_area = centered_rect(area, 50, 50);
 
     frame.render_widget(block, area);
     frame.render_widget(paragraph, paragraph_area);
@@ -97,27 +97,28 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
         .borders(Borders::ALL)
         .title(" Code Matrix ".white())
         .green();
+
     let paragraph = Paragraph::new(rows).block(block).centered().white();
 
     frame.render_widget(paragraph, layout[0]);
 }
 
-fn centered_rect(area: Rect, percent: u16) -> Rect {
+fn centered_rect(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let center = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage((100 - percent) / 2),
-            Constraint::Percentage(percent),
-            Constraint::Percentage((100 - percent) / 2),
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
         ])
         .split(area);
 
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage((100 - percent) / 2),
-            Constraint::Percentage(percent),
-            Constraint::Percentage((100 - percent) / 2),
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
         ])
         .split(center[1])[1]
 }
