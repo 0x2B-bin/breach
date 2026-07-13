@@ -12,7 +12,11 @@ pub fn render(frame: &mut Frame, game_manager: &GameManager) {
     let area = centered_rect(frame.area(), 40, 100);
     let areas = Layout::new(
         Direction::Vertical,
-        [Constraint::Length((game_manager.matrix_size as u16) + 2), Constraint::Fill(1)],
+        [
+            Constraint::Length((game_manager.matrix_size as u16) + 2),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ],
     )
     .split(area);
 
@@ -22,7 +26,8 @@ pub fn render(frame: &mut Frame, game_manager: &GameManager) {
         render_menu(frame, game_manager);
     } else {
         render_code_matrix(frame, areas[0], game_manager);
-        frame.render_widget(block, areas[1]);
+        render_buffer(frame, areas[1], game_manager);
+        frame.render_widget(block, areas[2]);
     }
 }
 
@@ -93,6 +98,35 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
     let paragraph = Paragraph::new(rows).block(block).centered().white();
 
     frame.render_widget(paragraph, area);
+}
+
+fn render_buffer(frame: &mut Frame, area: Rect, game_manager: &GameManager) {
+    let block = Block::default().borders(Borders::ALL).title(" Buffer ");
+    let buffer_area = centered_rect(area, 30, 50);
+
+    let mut codes = Vec::new();
+    for code in game_manager.buffer.iter() {
+        codes.push(Span::from(match code {
+            0 => " 1C ",
+            1 => " 55 ",
+            2 => " BD ",
+            3 => " E9 ",
+            _ => " [] ",
+        }));
+    }
+
+    let empty_slots_amount = game_manager.buffer_size - game_manager.buffer.len();
+
+    if empty_slots_amount > 0 {
+        for _ in 0..empty_slots_amount {
+            codes.push(Span::from(" [] "));
+        }
+    }
+
+    let buffer_line = Line::from(codes).centered();
+
+    frame.render_widget(block, area);
+    frame.render_widget(buffer_line, buffer_area);
 }
 
 fn centered_rect(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
