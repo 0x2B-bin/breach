@@ -25,6 +25,11 @@ pub enum MatrixDirection {
     Column,
 }
 
+pub enum MatrixControl {
+    Forward,
+    Backward,
+}
+
 pub enum View {
     Menu,
     Game,
@@ -68,5 +73,97 @@ impl GameManager {
         }
 
         self.matrix = matrix;
+    }
+
+    pub fn matrix_select_next(&mut self, control: MatrixControl) {
+        fn next_open_cell(
+            row: usize,
+            col: usize,
+            game_manager: &GameManager,
+            direction: &MatrixDirection,
+            control: MatrixControl,
+        ) -> Option<(usize, usize)> {
+            let mut row = row;
+            let mut col = col;
+
+            match direction {
+                MatrixDirection::Row => match control {
+                    MatrixControl::Forward => {
+                        if col < game_manager.matrix_size - 1 {
+                            col += 1;
+                            if game_manager.matrix[row][col] != 255 {
+                                Some((row, col))
+                            } else {
+                                next_open_cell(row, col, game_manager, direction, control)
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    MatrixControl::Backward => {
+                        if col > 0 {
+                            col -= 1;
+                            if game_manager.matrix[row][col] != 255 {
+                                Some((row, col))
+                            } else {
+                                next_open_cell(row, col, game_manager, direction, control)
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                },
+                MatrixDirection::Column => match control {
+                    MatrixControl::Forward => {
+                        if row < game_manager.matrix_size - 1 {
+                            row += 1;
+                            if game_manager.matrix[row][col] != 255 {
+                                Some((row, col))
+                            } else {
+                                next_open_cell(row, col, game_manager, direction, control)
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    MatrixControl::Backward => {
+                        if row > 0 {
+                            row -= 1;
+                            if game_manager.matrix[row][col] != 255 {
+                                Some((row, col))
+                            } else {
+                                next_open_cell(row, col, game_manager, direction, control)
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                },
+            }
+        }
+
+        if let Some((row, col)) = next_open_cell(
+            self.matrix_row_idx,
+            self.matrix_col_idx,
+            self,
+            &self.maxtrix_direction,
+            control,
+        ) {
+            self.matrix_row_idx = row;
+            self.matrix_col_idx = col;
+        }
+    }
+
+    pub fn matrix_confirm_selection(&mut self) {
+        let current_cell = &mut self.matrix[self.matrix_row_idx][self.matrix_col_idx];
+
+        if *current_cell == 255 {
+            return;
+        } else {
+            if self.buffer.len() < self.buffer_size {
+                self.buffer.push(*current_cell);
+            }
+            *current_cell = 255;
+        }
     }
 }

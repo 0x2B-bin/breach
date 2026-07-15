@@ -8,6 +8,23 @@ use ratatui::{
 
 use crate::game_manager::{GameManager, MatrixDirection, View};
 
+trait MatrixDisplay {
+    fn display(&self) -> &str;
+}
+
+impl MatrixDisplay for u8 {
+    fn display(&self) -> &str {
+        match self {
+            0 => " 1C ",
+            1 => " 55 ",
+            2 => " BD ",
+            3 => " E9 ",
+            255 => " [] ",
+            _ => "    ",
+        }
+    }
+}
+
 pub fn render(frame: &mut Frame, game_manager: &GameManager) {
     let area = centered_rect(frame.area(), 40, 100);
     let areas = Layout::new(
@@ -62,13 +79,7 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
     for (row_idx, row) in game_manager.matrix.iter().enumerate() {
         let mut spans = Vec::with_capacity(game_manager.matrix_size);
         for (col_idx, col) in row.iter().enumerate() {
-            let matrix_chr = match col {
-                0 => " 1C ",
-                1 => " 55 ",
-                2 => " BD ",
-                3 => " E9 ",
-                _ => "    ",
-            };
+            let matrix_chr = col.display();
 
             let mut span = Span::from(matrix_chr);
 
@@ -102,17 +113,11 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
 
 fn render_buffer(frame: &mut Frame, area: Rect, game_manager: &GameManager) {
     let block = Block::default().borders(Borders::ALL).title(" Buffer ");
-    let buffer_area = centered_rect(area, 30, 50);
+    let buffer_area = centered_rect(area, 40, 50);
 
     let mut codes = Vec::new();
     for code in game_manager.buffer.iter() {
-        codes.push(Span::from(match code {
-            0 => " 1C ",
-            1 => " 55 ",
-            2 => " BD ",
-            3 => " E9 ",
-            _ => " [] ",
-        }));
+        codes.push(Span::from(code.display()));
     }
 
     let empty_slots_amount = game_manager.buffer_size - game_manager.buffer.len();

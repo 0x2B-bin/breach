@@ -1,6 +1,6 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
-use crate::game_manager::{Difficulty, GameManager, MatrixDirection, View};
+use crate::game_manager::{Difficulty, GameManager, MatrixControl, MatrixDirection, View};
 
 pub fn update(game_manager: &mut GameManager, key_event: KeyEvent) {
     match game_manager.active_view {
@@ -27,30 +27,27 @@ pub fn update(game_manager: &mut GameManager, key_event: KeyEvent) {
         View::Game => match key_event.code {
             KeyCode::Esc | KeyCode::Char('q') => game_manager.should_quit = true,
             KeyCode::Right | KeyCode::Char('l')
-                if let MatrixDirection::Row = game_manager.maxtrix_direction
-                    && game_manager.matrix_col_idx < game_manager.matrix_size - 1 =>
+                if let MatrixDirection::Row = game_manager.maxtrix_direction =>
             {
-                game_manager.matrix_col_idx += 1;
+                game_manager.matrix_select_next(MatrixControl::Forward);
             }
             KeyCode::Left | KeyCode::Char('h')
-                if let MatrixDirection::Row = game_manager.maxtrix_direction
-                    && game_manager.matrix_col_idx > 0 =>
+                if let MatrixDirection::Row = game_manager.maxtrix_direction =>
             {
-                game_manager.matrix_col_idx -= 1;
+                game_manager.matrix_select_next(MatrixControl::Backward);
             }
             KeyCode::Up | KeyCode::Char('k')
-                if let MatrixDirection::Column = game_manager.maxtrix_direction
-                    && game_manager.matrix_row_idx > 0 =>
+                if let MatrixDirection::Column = game_manager.maxtrix_direction =>
             {
-                game_manager.matrix_row_idx -= 1;
+                game_manager.matrix_select_next(MatrixControl::Backward);
             }
             KeyCode::Down | KeyCode::Char('j')
-                if let MatrixDirection::Column = game_manager.maxtrix_direction
-                    && game_manager.matrix_row_idx < game_manager.matrix_size - 1 =>
+                if let MatrixDirection::Column = game_manager.maxtrix_direction =>
             {
-                game_manager.matrix_row_idx += 1;
+                game_manager.matrix_select_next(MatrixControl::Forward);
             }
             KeyCode::Enter => {
+                game_manager.matrix_confirm_selection();
                 game_manager.maxtrix_direction = match game_manager.maxtrix_direction {
                     MatrixDirection::Row => MatrixDirection::Column,
                     MatrixDirection::Column => MatrixDirection::Row,
