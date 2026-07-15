@@ -157,9 +157,7 @@ impl GameManager {
     pub fn matrix_confirm_selection(&mut self) {
         let current_cell = &mut self.matrix[self.matrix_row_idx][self.matrix_col_idx];
 
-        if *current_cell == 255 {
-            return;
-        } else {
+        if *current_cell != 255 {
             if self.buffer.len() < self.buffer_size {
                 self.buffer.push(*current_cell);
             }
