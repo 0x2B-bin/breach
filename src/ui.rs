@@ -19,6 +19,7 @@ impl MatrixDisplay for u8 {
             1 => " 55 ",
             2 => " BD ",
             3 => " E9 ",
+            4 => " 7A ",
             255 => " [] ",
             _ => "    ",
         }
@@ -26,7 +27,7 @@ impl MatrixDisplay for u8 {
 }
 
 pub fn render(frame: &mut Frame, game_manager: &GameManager) {
-    let area = centered_rect(frame.area(), 40, 100);
+    let area = centered_rect(frame.area(), 40, 50);
     let areas = Layout::new(
         Direction::Vertical,
         [
@@ -37,14 +38,12 @@ pub fn render(frame: &mut Frame, game_manager: &GameManager) {
     )
     .split(area);
 
-    let block = Block::new().borders(Borders::ALL);
-
     if let View::Menu = game_manager.active_view {
         render_menu(frame, game_manager);
     } else {
         render_code_matrix(frame, areas[0], game_manager);
         render_buffer(frame, areas[1], game_manager);
-        frame.render_widget(block, areas[2]);
+        render_sequences(frame, areas[2], game_manager);
     }
 }
 
@@ -113,7 +112,7 @@ fn render_code_matrix(frame: &mut Frame, area: Rect, game_manager: &GameManager)
 
 fn render_buffer(frame: &mut Frame, area: Rect, game_manager: &GameManager) {
     let block = Block::default().borders(Borders::ALL).title(" Buffer ");
-    let buffer_area = centered_rect(area, 40, 50);
+    let buffer_area = centered_rect(area, 100, 50);
 
     let mut codes = Vec::new();
     for code in game_manager.buffer.iter() {
@@ -132,6 +131,26 @@ fn render_buffer(frame: &mut Frame, area: Rect, game_manager: &GameManager) {
 
     frame.render_widget(block, area);
     frame.render_widget(buffer_line, buffer_area);
+}
+
+fn render_sequences(frame: &mut Frame, area: Rect, game_manager: &GameManager) {
+    let block = Block::default().borders(Borders::ALL).title(" Sequences ");
+    let center_area = centered_rect(area, 100, 50);
+
+    let mut sequence_lines = Vec::with_capacity(game_manager.sequences.len());
+
+    for sequence in game_manager.sequences.iter() {
+        let mut sequence_txt = String::with_capacity(sequence.len());
+        for cell in sequence {
+            sequence_txt += cell.display();
+        }
+        sequence_lines.push(Line::from(sequence_txt));
+    }
+
+    let paragraph = Paragraph::new(sequence_lines).centered();
+
+    frame.render_widget(block, area);
+    frame.render_widget(paragraph, center_area);
 }
 
 fn centered_rect(area: Rect, percent_x: u16, percent_y: u16) -> Rect {

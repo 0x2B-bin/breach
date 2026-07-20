@@ -11,6 +11,7 @@ pub struct GameManager {
     pub difficulty: Difficulty,
     pub difficulty_idx: usize,
     pub active_view: View,
+    pub sequences: Vec<Vec<u8>>,
     pub should_quit: bool,
 }
 
@@ -35,6 +36,15 @@ pub enum View {
     Game,
 }
 
+impl MatrixDirection {
+    pub fn toggle(&mut self) {
+        *self = match self {
+            MatrixDirection::Row => MatrixDirection::Column,
+            MatrixDirection::Column => MatrixDirection::Row,
+        }
+    }
+}
+
 impl GameManager {
     pub fn new() -> Self {
         Self {
@@ -48,31 +58,80 @@ impl GameManager {
             difficulty: Difficulty::Easy,
             difficulty_idx: 0,
             active_view: View::Menu,
+            sequences: Vec::new(),
             should_quit: false,
         }
     }
 
-    pub fn generate_matrix(&mut self) {
+    fn generate_master_path(&mut self) -> Vec<u8> {
         let mut rng = rand::rng();
-        let size = match self.difficulty {
+        let mut sequence = Vec::with_capacity(self.matrix_size);
+        let mut direction = MatrixDirection::Row;
+        let mut row = 0;
+        let mut col = rng.random_range(0..self.matrix_size);
+        let mut visted = Vec::with_capacity(self.matrix_size);
+
+        while sequence.len() < self.matrix_size {
+            while visted.contains(&(row, col)) {
+                match direction {
+                    MatrixDirection::Row => col = rng.random_range(0..self.matrix_size),
+                    MatrixDirection::Column => row = rng.random_range(0..self.matrix_size),
+                }
+            }
+
+            let cell_value = rng.random_range(0..=3);
+            self.matrix[row][col] = cell_value;
+            sequence.push(cell_value);
+            visted.push((row, col));
+            direction.toggle();
+        }
+
+        sequence
+    }
+
+    fn generate_sequences(&self, master_path: &[u8]) -> Vec<Vec<u8>> {
+        //let mut rng = rand::rng();
+        let sequences_target_len = match self.difficulty {
+            Difficulty::Easy => 1,
+            Difficulty::Normal => 2,
+            Difficulty::Hard => 3,
+        };
+        let mut sequences = Vec::with_capacity(sequences_target_len);
+
+        if let Difficulty::Easy = self.difficulty {
+            sequences.push(master_path[..].to_vec());
+        }
+
+        while sequences.len() < sequences_target_len {
+            break
+        }
+
+        sequences
+    }
+
+    fn randomize_empty_cells(&mut self) {
+        let mut rng = rand::rng();
+        self.matrix.iter_mut().for_each(|row| {
+            row.iter_mut().for_each(|col| {
+                if *col == 255 {
+                    *col = rng.random_range(0..=3) as u8;
+                }
+            })
+        });
+    }
+
+    pub fn generate_matrix(&mut self) {
+        self.matrix_size = match self.difficulty {
             Difficulty::Easy => 4,
             Difficulty::Normal => 5,
             Difficulty::Hard => 6,
         };
 
-        self.matrix_size = size;
+        self.matrix = vec![vec![255_u8; self.matrix_size]; self.matrix_size];
 
-        let mut matrix = Vec::new();
-
-        for _ in 0..size {
-            let mut row = Vec::new();
-            for _ in 0..size {
-                row.push(rng.random_range(0..=3));
-            }
-            matrix.push(row);
-        }
-
-        self.matrix = matrix;
+        let master_path = self.generate_master_path();
+        self.sequences = self.generate_sequences(&master_path);
+        self.randomize_empty_cells();
     }
 
     pub fn matrix_select_next(&mut self, control: MatrixControl) {

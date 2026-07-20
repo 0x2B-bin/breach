@@ -48,10 +48,7 @@ pub fn update(game_manager: &mut GameManager, key_event: KeyEvent) {
             }
             KeyCode::Enter => {
                 game_manager.matrix_confirm_selection();
-                game_manager.maxtrix_direction = match game_manager.maxtrix_direction {
-                    MatrixDirection::Row => MatrixDirection::Column,
-                    MatrixDirection::Column => MatrixDirection::Row,
-                };
+                game_manager.maxtrix_direction.toggle();
             }
             _ => {}
         },
