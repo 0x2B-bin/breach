@@ -54,7 +54,7 @@ impl GameManager {
             matrix_col_idx: 0,
             maxtrix_direction: MatrixDirection::Row,
             buffer: Vec::new(),
-            buffer_size: 4,
+            buffer_size: 6,
             difficulty: Difficulty::Easy,
             difficulty_idx: 0,
             active_view: View::Menu,
@@ -79,7 +79,7 @@ impl GameManager {
                 }
             }
 
-            let cell_value = rng.random_range(0..=3);
+            let cell_value = rng.random_range(0..=4);
             self.matrix[row][col] = cell_value;
             sequence.push(cell_value);
             visted.push((row, col));
@@ -90,7 +90,7 @@ impl GameManager {
     }
 
     fn generate_sequences(&self, master_path: &[u8]) -> Vec<Vec<u8>> {
-        //let mut rng = rand::rng();
+        let mut rng = rand::rng();
         let sequences_target_len = match self.difficulty {
             Difficulty::Easy => 1,
             Difficulty::Normal => 2,
@@ -100,12 +100,43 @@ impl GameManager {
 
         if let Difficulty::Easy = self.difficulty {
             sequences.push(master_path[..].to_vec());
+            return sequences
         }
 
-        while sequences.len() < sequences_target_len {
-            break
+        let mut slices : Vec<(usize, usize)> = Vec::with_capacity(sequences_target_len);
+        let mut cursor = 0;
+        while slices.len() < sequences_target_len {
+            let mut remaining_spaces = master_path.len().saturating_sub(cursor + 1);
+            let length = if remaining_spaces >= 4 {
+                rng.random_range(2..=4)
+            } else {
+                rng.random_range(2..=remaining_spaces)
+            };
+
+            slices.push((cursor, cursor+length));
+
+            let mut step = rng.random_range(0..=length);
+            
+            if step + cursor >= master_path.len() - 1 {
+                step = master_path.len() - (cursor + 1)
+            }
+
+            cursor += step;
+            remaining_spaces = master_path.len().saturating_sub(cursor + 1);
+
+            if remaining_spaces < 2 { 
+                cursor -= step;
+                slices.pop();
+            }
         }
 
+        for slice in slices {
+            sequences.push(master_path[slice.0..slice.1].to_vec());
+        }
+
+        sequences.sort_by(|a, b| {
+            a.len().cmp(&b.len())
+        });
         sequences
     }
 
@@ -114,7 +145,7 @@ impl GameManager {
         self.matrix.iter_mut().for_each(|row| {
             row.iter_mut().for_each(|col| {
                 if *col == 255 {
-                    *col = rng.random_range(0..=3) as u8;
+                    *col = rng.random_range(0..=4) as u8;
                 }
             })
         });
